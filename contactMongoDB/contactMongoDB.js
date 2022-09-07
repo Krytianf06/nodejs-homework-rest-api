@@ -7,8 +7,8 @@ const listContacts = async (req, res, next) => {
      if (contact) {
       res.status(200).json(contact);
       }
-  } catch (error) {
-    next();
+  } catch (e) {
+    next(e);
   }
     
   };
@@ -24,7 +24,7 @@ const getContactById = async (req, res, next) => {
         res.status(404).json({message: "Not found"});
       }
     } catch (e) {
-      next();
+      next(e);
     }
     
   };
@@ -46,7 +46,8 @@ const addContact = async (req, res, next) => {
 
       }
     } catch (e) {
-      next();
+
+      next(e);
     }
   };
 
@@ -62,7 +63,7 @@ const removeContact = async (req, res, next) => {
         res.json(result);
       }
     } catch (e) {
-      next();
+      next(e);
     }
   };
 
@@ -104,7 +105,7 @@ const patchContact = async (req, res, next) => {
       }
     } catch (e) {
       res.status(404).json({message: "Not found"});
-      next();
+      next(e);
     }
   };
 
