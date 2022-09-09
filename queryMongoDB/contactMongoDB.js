@@ -1,5 +1,5 @@
-const service = require('../service/index');
-const valid = require('../service/schema/joiValid')
+const service = require('../service/contact');
+const valid = require('../service/validation/contactValid')
 
 const listContacts = async (req, res, next) => {
     const contact = await service.getAllContacts();
@@ -30,26 +30,7 @@ const getContactById = async (req, res, next) => {
   };
 
 
-const addContact = async (req, res, next) => {
-    const  data  = req.body;
-    try {
-      const { error } = valid.contactValid.validate(req.body)
 
-      if (error) {
-        res.status(400).json({message: "missing required name field."});
-      } else {
-        const result = await service.createContact( data );
-
-        if (result) {
-          res.status(201).json(result);
-        }
-
-      }
-    } catch (e) {
-
-      next(e);
-    }
-  };
 
  
 const removeContact = async (req, res, next) => {
@@ -67,15 +48,44 @@ const removeContact = async (req, res, next) => {
     }
   };
 
+  const addContact = async (req, res, next) => {
+    const  data  = req.body;
+    try {
+      const { error } = valid.contactValid.validate(req.body)
+
+      if (error) {
+        res.status(400).json({message: error});
+      } else {
+        const result = await service.createContact( data );
+
+        if (result) {
+          res.status(201).json(result);
+        }
+
+      }
+    } catch (e) {
+      next(e);
+    }
+  };
+
+
 const updateContact = async (req, res, next) => {
+  
     const { contactId } = req.params;
     const fields = req.body;
     try {
       const findID = await service.getSingleContact(contactId);
+      const { error } = valid.contactValidUpdata.validate(req.body)
+
       if (findID === null) {
         res.status(404).json({message: "Not found"});
+
+      } else if (error) {
+        res.status(400).json({message: "missing required name field."});
+
       } else if (fields) {
         const result = await service.putContact(contactId, fields);
+        
           if (result) {
             res.json(result);
           }

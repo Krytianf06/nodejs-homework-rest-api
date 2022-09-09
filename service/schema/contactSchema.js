@@ -3,10 +3,8 @@ const { Schema } = mongoose;
 
 const contactSchema = new Schema(
   {
-  name: {
+    name: {
       type: String,
-      minlength: 4,
-      maxlength: 70,
       required: [true, 'Set name for contact'],
     },
     email: {
@@ -21,7 +19,13 @@ const contactSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: 'user',
+      required: true,
+    },
   },
+  { versionKey: false, timestamps: true }
 );
 
 const Contact = mongoose.model("contacts", contactSchema, "contacts");
