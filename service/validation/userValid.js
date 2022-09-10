@@ -6,7 +6,7 @@ const userValid = Joi.object({
 });
 
 const subscriptionUser = Joi.object({
-  subscription: Joi.string().valid('starter', 'pro', 'business').required(),
+  subscription: Joi.string().valid('starter', 'pro', 'business'),
 });
 
 

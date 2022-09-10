@@ -49,14 +49,14 @@ const removeContact = async (req, res, next) => {
   };
 
   const addContact = async (req, res, next) => {
-    const  data  = req.body;
     try {
       const { error } = valid.contactValid.validate(req.body)
 
       if (error) {
         res.status(400).json({message: error});
       } else {
-        const result = await service.createContact( data );
+        const { _id } = req.user;
+        const result = await service.createContact( {...req.body, owner: _id} );
 
         if (result) {
           res.status(201).json(result);
