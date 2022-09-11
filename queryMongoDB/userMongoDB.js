@@ -6,10 +6,12 @@ const valid = require('../service/validation/userValid');
 const jwt = require('jsonwebtoken');
 const jimp = require('jimp');
 const gravatar = require('gravatar');
+const { v4:uuidv4} = require('uuid');
+const {sendEmail} = require('../service/sendEmail/sendEmail');
 
 const avatarStore = path.join(__dirname, "../public", "avatars");
 
-const register = async (req, res) => {
+const register = async (req, res, next) => {
     const {email, password } = req.body;
     try {
         const user = await userDB.findUser({email});
@@ -19,9 +21,18 @@ const register = async (req, res) => {
         } else if (!error) {
             res.status(400).json({message:error})
         } else {
+            const verificationToken = uuidv4();
             const avatarURL = gravatar.url(email);
             const userHash = bcrypt.hashSync(password, bcrypt.genSaltSync(2));
-        await userDB.createUser({email, password:userHash,avatarURL,});
+        await userDB.createUser({
+            email,
+            password:userHash,
+            avatarURL,
+            verificationToken,
+            });
+            const msg = `Here's a token to verify your email address: http://localhost:3000/api/users/verify/${verificationToken}`;
+            await sendEmail(email, "registration", msg);
+
         res.status(201).json(
             {user:
                 {
@@ -31,7 +42,7 @@ const register = async (req, res) => {
             });
         }        
     } catch (e) {
-        next();
+        next(e);
     }
 };
 
@@ -108,14 +119,9 @@ const pathUserAvatar = async (req, res, next) => {
     }          
     const { _id } = req.user;
     const { path: tempPath, originalname } = req.file;
-    console.log(tempPath);
-    console.log(originalname);
     const [extension] = originalname.split(".").reverse();
-    console.log(extension);
     const newName = `${_id}.${extension}`;
-    console.log(newName);
     const uploadPath = path.join(avatarStore, newName);
-    console.log(uploadPath);
     await fs.rename(tempPath, uploadPath);
     const avatarURL = path.join("avatars", newName);
     await userDB.findAndUpdateUser(_id, { avatarURL });
@@ -126,6 +132,45 @@ const pathUserAvatar = async (req, res, next) => {
 };
 
 
+const verificationToken = async (req, res, next)=>{
+    const verificationToken = req.params.verificationToken;
+    const user = await userDB.findUser({verificationToken});
+    if (!user) {
+        res.status(404).json({message: 'User not found'});
+    };
+
+    await userDB.findAndUpdate( {verificationToken} , { $set: { verify: true } });
+    req.params.verificationToken = null;
+
+    return res.status(200).json({ message: 'Verification successful'} );
+}; 
+
+
+
+const repeatverificationToken = async (req, res, next)=>{
+    const { email } = req.body;
+    const user = await userDB.findUser({email});
+    if (!email) {
+        res.status(400).json({message: "missing required field email"});
+    }
+    if (!user) {
+        res.status(404).json({message: 'User not found'});
+    };
+    if (user.verify) {
+        res.status(400).json({message: "Verification has already been passed"});
+    }
+
+    const msg = `Here's a token to verify your email address: http://localhost:3000/api/users/verify/${user.verificationToken}`;
+    await sendEmail(email, "registration", msg);
+
+    res.status(200).json({message: `Verification email sent`});
+};
+
+
+
+
+
+
 module.exports = {
     register,
     login,
@@ -133,4 +178,6 @@ module.exports = {
     current,
     pathUser,
     pathUserAvatar,
+    verificationToken,
+    repeatverificationToken,
 };
