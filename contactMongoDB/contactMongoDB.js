@@ -30,15 +30,33 @@ const getContactById = async (req, res, next) => {
   };
 
 
-const addContact = async (req, res, next) => {
-    const  data  = req.body;
+
+
+ 
+const removeContact = async (req, res, next) => {
+  const { contactId } = req.params;
+    try {
+      const findID = await service.getSingleContact(contactId);
+      if (findID === null) {
+        res.status(404).json({message: "Not found"});
+      } else {
+        const result = await service.deleteContact(contactId);
+        res.json(result);
+      }
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  const addContact = async (req, res, next) => {
     try {
       const { error } = valid.contactValid.validate(req.body)
 
       if (error) {
         res.status(400).json({message: "missing required name field."});
       } else {
-        const result = await service.createContact( data );
+        const { _id } = req.user;
+        const result = await service.createContact( {...req.body, owner: _id} );
 
         if (result) {
           res.status(201).json(result);
@@ -67,6 +85,30 @@ const removeContact = async (req, res, next) => {
     }
   };
 
+<<<<<<< HEAD:contactMongoDB/contactMongoDB.js
+=======
+  const addContact = async (req, res, next) => {
+    try {
+      const { error } = valid.contactValid.validate(req.body)
+
+      if (error) {
+        res.status(400).json({message: error});
+      } else {
+        const { _id } = req.user;
+        const result = await service.createContact( {...req.body, owner: _id} );
+
+        if (result) {
+          res.status(201).json(result);
+        }
+
+      }
+    } catch (e) {
+      next(e);
+    }
+  };
+
+
+>>>>>>> hw05-avatars:queryMongoDB/contactMongoDB.js
 const updateContact = async (req, res, next) => {
     const { contactId } = req.params;
     const fields = req.body;
