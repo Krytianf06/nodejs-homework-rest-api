@@ -11,6 +11,8 @@ router.get('/logout', authorization, userController.logout);
 router.get('/current', authorization, userController.current);
 router.patch('/', authorization, userController.pathUser);
 router.patch('/avatars', authorization, uploadMiddleware.single("avatar"),modificationImages ,userController.pathUserAvatar);
+router.get("/verify/:verificationToken", userController.verificationToken);
+router.post("/verify", userController.repeatverificationToken);
 
  
  
